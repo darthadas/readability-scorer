@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Redability Scorer</title>
+        <style>
+            body {
+            font-family: Arial, sans-serif;
+            max-width: 650px;
+            margin: 60px auto;
+            background: #f5f5f5;
+            padding: 0 20px;
+            }
+            textarea {
+            width: 100%;
+            height: 180px;
+            padding: 12px;
+            font-size: 15px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            box-sizing: border-box;
+            resize: vertical;
+            }
+            button {
+            padding: 10px 24px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 10px;
+            }
+            #result {
+            margin-top: 20px;
+            background: white;
+            padding: 20px;
+            border-radius: 6px;
+            white-space: pre-line;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>📖 Readability Scorer</h1>
+        <textarea id="textInput" oninput = "wordCounter()" placeholder="Paste your text here..."></textarea>
+        <p id="wordCount" style="font-size:13px; color:#888; margin:4px 0;">0 words</p>
+        <button onclick="analyzeText()">Analyse</button>
+        <div id="result"></div>
+
+        <script>
+            function wordCounter() {
+                const text = document.getElementById("textInput").value.trim();
+                if (!text) {
+                    document.getElementById("wordCount").innerText = "0 words";
+                    return;
+                }
+                document.getElementById("wordCount").innerText = text.split(/\s+/).filter(w => w.length > 0).length + " words";
+            }
+
+            function countSyllables(word) {
+                word = word.toLowerCase().replace(/[^a-z]/g, "");
+                if (word.length <= 3) return 1;
+                word = word.replace(/(?:[^laeiouy]es|ed|[^laeiouy]e)$/, "");
+                word = word.replace(/[^y]/, "");
+                const matches = word.match(/[aeiouy]{1,2}/g);
+                return matches ? matches.length : 1;
+            }
+
+            function analyzeText() {
+                const text = document.getElementById("textInput").value.trim();
+                if (!text) {
+                    document.getElementById("result").innerText = "Please enter some text.";
+                    return;
+                }
+                const words = text.split(/\s+/).filter(w => w.length > 0);
+                const sentences = text.split(/[.?!+]/).filter(s => s.trim().length > 0);
+                const syllables = words.reduce((sum, word) => sum + countSyllables(word), 0);
+
+                const wordCount = words.length;
+                const sentenceCount = sentences.length;
+                const syllableCount = syllables;
+
+                const fleschScore = 206.835 - 1.015  * (wordCount / sentenceCount) - 84.6   * (syllableCount / wordCount);
+                const score = Math.max(0, Math.min(100, fleschScore)).toFixed(1);
+
+                let level = "";
+                if (score >= 80) level = "Very Easy — 5th grade 📗";
+                else if (score >= 60) level = "Standard — General audience 📘";
+                else if (score >= 40) level = "Difficult — College level 📙";
+                else level = "Very Difficult — Academic/Professional 📕";
+
+                const avgWordLength = (words.join("").length / wordCount).toFixed(1);
+                const readingTime = Math.ceil(wordCount / 200);
+                const scoreColors = {80: "#2ecc71", 60: "#f39c12", 40: "#e67e22", 0: "#e74c3c"};
+
+
+                document.getElementById("result").innerText =
+                `Words: ${wordCount}
+                Sentences: ${sentenceCount}
+                Syllables: ${syllableCount}
+
+                Average Word Length: ${avgWordLength}
+                Estimated Reading Time: ${readingTime} minutes
+
+                Flesch Score: ${score}/100
+                Level: ${level}`;
+
+                document.getElementById("result").style.color = score >= 80 ? scoreColors[80] : score >= 60 ? scoreColors[60] : score >= 40 ? scoreColors[40] : scoreColors[0];
+
+            }
+
+
+        </script>
+    </body>
+</html>
